@@ -3,7 +3,7 @@
 Issues and pull requests are welcome.
 
 ```bash
-git clone https://github.com/syndromics/syndromics.git
+git clone https://github.com/wishapples/syndromics.git
 cd syndromics
 pip install -e '.[dev]'
 pytest

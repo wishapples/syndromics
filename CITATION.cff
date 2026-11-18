@@ -6,7 +6,7 @@ authors:
 version: 0.4.3
 date-released: 2026-11-18
 license: MIT
-repository-code: "https://github.com/syndromics/syndromics"
+repository-code: "https://github.com/wishapples/syndromics"
 keywords:
   - quantum error correction
   - surface code

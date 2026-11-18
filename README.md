@@ -49,7 +49,7 @@ pytest tests/test_decodecheck_real.py -q
 ## Install
 
 ```bash
-pip install git+https://github.com/syndromics/syndromics.git
+pip install git+https://github.com/wishapples/syndromics.git
 ```
 
 Requires Python 3.10+, [Stim](https://github.com/quantumlib/Stim), NumPy, SciPy and Matplotlib.
