@@ -1,0 +1,172 @@
+{
+ "scenarioA": {
+  "faults": "readout q103=15%, q105=9%; TLS defect on q104 (its gates 4%); bad gate q142-q143 6%",
+  "rows": [
+   {
+    "circuit": "GHZ state on 12 qubits",
+    "default": 0.6463847707908456,
+    "syndromics": 0.8773493713746412,
+    "oracle": 0.8773493713746412
+   },
+   {
+    "circuit": "Bernstein-Vazirani, secret 101101",
+    "default": 0.9502500000000002,
+    "syndromics": 0.9502500000000002,
+    "oracle": 0.9502500000000002
+   },
+   {
+    "circuit": "QFT round trip on 5 qubits",
+    "default": 0.7617500000000001,
+    "syndromics": 0.96375,
+    "oracle": 0.96375
+   },
+   {
+    "circuit": "Grover search for 101",
+    "default": 0.5661556043424709,
+    "syndromics": 0.9808554032555815,
+    "oracle": 0.9808554032555815
+   },
+   {
+    "circuit": "Quantum teleportation",
+    "default": 0.992,
+    "syndromics": 0.992,
+    "oracle": 0.992
+   },
+   {
+    "circuit": "QAOA MaxCut on 6 nodes",
+    "default": 0.9650664999228895,
+    "syndromics": 0.9889811601314761,
+    "oracle": 0.9889811601314761
+   }
+  ],
+  "flagged": {
+   "q105": "readout 0.0948, calibration says 0.0059 (16.2x)",
+   "q104": "readout 0.0124, calibration says 0.0048 (2.6x)",
+   "q103": "readout 0.1546, calibration says 0.0116 (13.3x)",
+   "q104-q105": "gate 0.0374, calibration says 0.0016 (22.7x)",
+   "q103-q104": "gate 0.0459, calibration says 0.0016 (28.1x)",
+   "q142-q143": "gate 0.0597, calibration says 0.0013 (47.7x)"
+  }
+ },
+ "scenarioB": {
+  "rows": [
+   {
+    "default": 0.8816661674618188,
+    "syndromics": 0.8816661674618188,
+    "oracle": 0.8816661674618188
+   },
+   {
+    "default": 0.8317548497970036,
+    "syndromics": 0.8773493713746412,
+    "oracle": 0.8773493713746412
+   },
+   {
+    "default": 0.8816661674618188,
+    "syndromics": 0.8773493713746412,
+    "oracle": 0.8816661674618188
+   },
+   {
+    "default": 0.7596523990651807,
+    "syndromics": 0.8747126594742121,
+    "oracle": 0.8747126594742121
+   },
+   {
+    "default": 0.8816661674618188,
+    "syndromics": 0.8816661674618188,
+    "oracle": 0.8816661674618188
+   },
+   {
+    "default": 0.7983111886395226,
+    "syndromics": 0.861154417916473,
+    "oracle": 0.8679932600468948
+   },
+   {
+    "default": 0.8816661674618188,
+    "syndromics": 0.8816661674618188,
+    "oracle": 0.8816661674618188
+   },
+   {
+    "default": 0.8379070969709836,
+    "syndromics": 0.8747126594742121,
+    "oracle": 0.8747126594742121
+   },
+   {
+    "default": 0.7867788749842785,
+    "syndromics": 0.8747126594742121,
+    "oracle": 0.8747126594742121
+   },
+   {
+    "default": 0.8816661674618188,
+    "syndromics": 0.8816661674618188,
+    "oracle": 0.8816661674618188
+   },
+   {
+    "default": 0.810106013067902,
+    "syndromics": 0.8747126594742121,
+    "oracle": 0.8747126594742121
+   },
+   {
+    "default": 0.8816661674618188,
+    "syndromics": 0.8816661674618188,
+    "oracle": 0.8816661674618188
+   },
+   {
+    "default": 0.8816661674618188,
+    "syndromics": 0.8816661674618188,
+    "oracle": 0.8816661674618188
+   },
+   {
+    "default": 0.8816661674618188,
+    "syndromics": 0.8816661674618188,
+    "oracle": 0.8816661674618188
+   },
+   {
+    "default": 0.8816661674618188,
+    "syndromics": 0.8816661674618188,
+    "oracle": 0.8816661674618188
+   },
+   {
+    "default": 0.7851350673176306,
+    "syndromics": 0.8747126594742121,
+    "oracle": 0.8747126594742121
+   },
+   {
+    "default": 0.8073112208614348,
+    "syndromics": 0.8747126594742121,
+    "oracle": 0.8747126594742121
+   },
+   {
+    "default": 0.8022955546411412,
+    "syndromics": 0.8747126594742121,
+    "oracle": 0.8747126594742121
+   },
+   {
+    "default": 0.8816661674618188,
+    "syndromics": 0.8816661674618188,
+    "oracle": 0.8816661674618188
+   },
+   {
+    "default": 0.8816661674618188,
+    "syndromics": 0.8816661674618188,
+    "oracle": 0.8816661674618188
+   }
+  ],
+  "mean": {
+   "default": 0.8458790053712543,
+   "syndromics": 0.8777751725801716,
+   "oracle": 0.8783329544910515
+  },
+  "wins": 9,
+  "ties": 11
+ },
+ "control": {
+  "default": 0.8816661674618188,
+  "syndromics": 0.8816661674618188,
+  "oracle": 0.8816661674618188
+ },
+ "control_flags": {},
+ "coverage": [
+  115,
+  156
+ ]
+}

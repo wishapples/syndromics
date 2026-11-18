@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "syndromics"
+version = "0.4.3"
+description = "Read a quantum chip's health from its error-correction syndrome data"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [{ name = "Syndromics" }]
+keywords = ["quantum error correction", "surface code", "qubit characterisation", "stim", "diagnostics"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Topic :: Scientific/Engineering :: Physics",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+]
+dependencies = ["stim>=1.13", "numpy>=1.24", "scipy>=1.10", "matplotlib>=3.7"]
+
+[project.optional-dependencies]
+google = ["pymatching>=2.2"]
+ibm = ["qiskit>=2.0", "qiskit-ibm-runtime>=0.40", "qiskit-aer>=0.17", "pymatching>=2.2"]
+dev = ["pytest>=7", "pymatching>=2.2"]
+
+[project.scripts]
+syndromics = "syndromics.cli:main"
+syndromics-ibm-demo = "syndromics.ibmdemo:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

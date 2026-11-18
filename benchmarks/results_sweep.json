@@ -1,0 +1,92 @@
+[
+ {
+  "strength": "strong (6x / 3p / 5x)",
+  "shots": 50000,
+  "true_defects": 35,
+  "localised": 35,
+  "exact": 20,
+  "false_alarms": 0,
+  "suspects_to_check": 53,
+  "recall": 1.0
+ },
+ {
+  "strength": "strong (6x / 3p / 5x)",
+  "shots": 200000,
+  "true_defects": 35,
+  "localised": 35,
+  "exact": 20,
+  "false_alarms": 0,
+  "suspects_to_check": 53,
+  "recall": 1.0
+ },
+ {
+  "strength": "strong (6x / 3p / 5x)",
+  "shots": 1000000,
+  "true_defects": 35,
+  "localised": 35,
+  "exact": 20,
+  "false_alarms": 0,
+  "suspects_to_check": 53,
+  "recall": 1.0
+ },
+ {
+  "strength": "medium (3x / 1.5p / 3x)",
+  "shots": 50000,
+  "true_defects": 35,
+  "localised": 34,
+  "exact": 20,
+  "false_alarms": 0,
+  "suspects_to_check": 51,
+  "recall": 0.9714285714285714
+ },
+ {
+  "strength": "medium (3x / 1.5p / 3x)",
+  "shots": 200000,
+  "true_defects": 35,
+  "localised": 34,
+  "exact": 20,
+  "false_alarms": 0,
+  "suspects_to_check": 51,
+  "recall": 0.9714285714285714
+ },
+ {
+  "strength": "medium (3x / 1.5p / 3x)",
+  "shots": 1000000,
+  "true_defects": 35,
+  "localised": 34,
+  "exact": 20,
+  "false_alarms": 0,
+  "suspects_to_check": 51,
+  "recall": 0.9714285714285714
+ },
+ {
+  "strength": "weak (2x / 0.75p / 2x)",
+  "shots": 50000,
+  "true_defects": 35,
+  "localised": 31,
+  "exact": 20,
+  "false_alarms": 0,
+  "suspects_to_check": 41,
+  "recall": 0.8857142857142857
+ },
+ {
+  "strength": "weak (2x / 0.75p / 2x)",
+  "shots": 200000,
+  "true_defects": 35,
+  "localised": 34,
+  "exact": 20,
+  "false_alarms": 0,
+  "suspects_to_check": 48,
+  "recall": 0.9714285714285714
+ },
+ {
+  "strength": "weak (2x / 0.75p / 2x)",
+  "shots": 1000000,
+  "true_defects": 35,
+  "localised": 33,
+  "exact": 20,
+  "false_alarms": 0,
+  "suspects_to_check": 48,
+  "recall": 0.9428571428571428
+ }
+]

@@ -1,0 +1,191 @@
+# Syndromics demo for IBM Quantum: run it yourself
+
+This kit lets an IBM Quantum engineer check Syndromics on an IBM backend **with their own account**,
+in about 30 minutes of hands-on time and a few minutes of QPU time.
+
+| Step | What it shows | IBM account | QPU use |
+|---|---|---|---|
+| 0. `check` | Environment and account are ready | optional | none |
+| 1. `rehearse` | Reproduces our simulation results locally | no | none |
+| 2. `reanalyse` on our data | Reproduces our **real ibm_kingston result** from the raw shots included in the kit | no | none |
+| A. `validate` | On your chip: does a decoder given the **Syndromics noise model** make fewer logical errors than one given **IBM's calibration**? Tested on held-out shots | yes | 5 circuits × 30,000 shots, one job |
+| B. `health` | What has **changed since the last calibration**, chip-wide | yes | ~7 circuits × 50,000 shots |
+| C. `ab` | The same circuits with **default vs Syndromics placement**, interleaved in one job | yes | 6 circuits × 4,000 shots |
+| `reanalyse` | Re-runs the step-A analysis on saved raw data | no | none |
+| `report` | One HTML page with all results | no | none |
+
+**Privacy.** The kit talks only to IBM Quantum, through your saved Qiskit Runtime account. Nothing is
+sent to Syndromics. Results go to `./results/` (JSON + `report.html`); share them only if you wish.
+They contain backend names, job IDs, qubit numbers and error rates, but no credentials.
+
+**Safety.** Hardware steps print the circuits, shots and a rough QPU-time estimate, then stop. They
+submit only when you add `--yes`.
+
+---
+
+## 1. Install (5 minutes)
+
+Requires Python 3.10–3.13.
+
+```bash
+python -m venv syndromics-env
+# Windows: syndromics-env\Scripts\activate      macOS/Linux: source syndromics-env/bin/activate
+source syndromics-env/bin/activate
+pip install -r requirements.txt
+```
+
+If you have not used Qiskit Runtime on this machine before, save your account once
+(token and instance CRN from https://quantum.cloud.ibm.com):
+
+```python
+from qiskit_ibm_runtime import QiskitRuntimeService
+QiskitRuntimeService.save_account(token="YOUR_API_KEY", instance="YOUR_INSTANCE_CRN", set_as_default=True)
+```
+
+## 2. Check and rehearse (no QPU use)
+
+```bash
+syndromics-ibm-demo check
+syndromics-ibm-demo rehearse
+```
+
+`check` lists the backends your account can use. `rehearse` runs everything on a local simulator of
+`ibm_kingston` with four planted post-calibration faults and should print, in about 20 seconds:
+
+```
+Health check: 7 lines, 115 qubits; changes found:
+  q103       readout 0.1546, calibration says 0.0116 (13.3x)
+  q103-q104  gate 0.0459, calibration says 0.0016 (28.1x)
+  q104       readout 0.0124, calibration says 0.0048 (2.6x)
+  q104-q105  gate 0.0374, calibration says 0.0016 (22.7x)
+  q105       readout 0.0948, calibration says 0.0059 (16.2x)
+  q142-q143  gate 0.0597, calibration says 0.0013 (47.7x)
+Control (same chip, no drift): 0 false alarm(s)
+  GHZ state on 12 qubits         default 0.646  syndromics 0.877
+  Grover search for 101          default 0.566  syndromics 0.981
+  QFT round trip on 5 qubits     default 0.762  syndromics 0.964
+```
+
+## 3. Reproduce our hardware result (no account, no QPU)
+
+The kit includes the raw shots from our run on `ibm_kingston` (job `dbukcjvf8rhs73bmf9l0`, 18 November 2026,
+qubits 117-105-106-107-108-109-118-129-128, 10 rounds, 30,000 shots). From the kit folder:
+
+```bash
+cd example_ibm_kingston_2026-11-18
+syndromics-ibm-demo reanalyse
+```
+
+Expected output (a few seconds):
+
+```
+=== 1. Does the measured noise model decode better? ===
+Held-out decoding test: 6 tests, each fits on 15,000 shots and decodes the other 15,000.
+  Noise model given to the decoder       logical error  vs calibration
+  Uniform (no device data)                      0.447%            +13%
+  Device calibration                            0.396%        baseline
+  Standard correlation re-weighting             0.199%            -50%
+  Syndromics noise model                        0.198%            -50%
+  Syndromics beat the calibration in 6 of 6 tests.
+
+=== 2. Components worse than the calibration says (fit on all shots) ===
+  q129-q128 two-qubit gate           x17.2 +/- 0.6   (calibration 0.0012, measured 0.0201)
+  q105 measurement                   x4.3 +/- 0.1   (calibration 0.0020, measured 0.0083)
+  q108-q109 two-qubit gate           x3.3 +/- 0.6   (calibration 0.0013, measured 0.0042)
+  q109 measurement                   x2.8 +/- 0.1   (calibration 0.0044, measured 0.0125)
+  q128 measurement                   x2.3 +/- 0.1   (calibration 0.0073, measured 0.0168)
+```
+
+How to read it: the decoder given the Syndromics model made **half as many logical errors** as the one
+given IBM's calibration, in every one of six train/test splits (five random, one time-ordered). Standard
+model-free correlation re-weighting does equally well on this small code; we say so plainly. What Syndromics
+adds is the **physical attribution** (section 2): it points at the q128-q129 end of the line, where IBM's own
+data shows q128 with the lowest T2. A repetition code localises a fault well but splits it only roughly between
+a measurement and its neighbouring gate, so read large ratios as "look here".
+
+## 4. Run on your hardware
+
+Pick any Heron backend from the `check` output (examples use `ibm_kingston`). Run each step once
+without `--yes` to see what it will submit, then again with `--yes`.
+
+### A. Validate: does the measured noise model decode better on your chip? (5 circuits, one job)
+
+```bash
+syndromics-ibm-demo validate --backend ibm_kingston --yes
+```
+
+One job contains a 5-data-qubit repetition code (10 rounds) on the best line it finds, plus four short
+reference circuits on the same qubits (terminal readout and repeated mid-circuit measure + reset). The kit then:
+
+1. **Held-out decoding test.** Splits the shots in half six times (five random splits and one time split). For
+   each split it fits the noise model on one half and decodes the other half with PyMatching, using four
+   noise models: uniform, IBM's calibration, standard correlation re-weighting, and Syndromics (a physical
+   fit starting from IBM's calibration).
+2. **Components worse than calibration.** Lists each measurement, gate or idle component that is at least
+   2x worse than its calibrated value.
+3. **Detail.** Each qubit's measurement error as Syndromics sees it, next to today's references and IBM's
+   calibration. Syndromics measures the effective per-round error (measure + reset + neighbouring gate errors),
+   which is larger than the end-of-circuit readout IBM publishes. So these numbers are not expected to match
+   the published readout one-to-one.
+
+Raw data is saved to `results/A_raw.npz`; `syndromics-ibm-demo reanalyse` repeats the analysis at no QPU cost.
+
+*What to look for:* on our run, Syndromics roughly halved the calibration's logical error in 6 of 6 tests.
+On a line that is well described by its calibration, expect a smaller gain and "none" in part 2. Both are
+valid results. If the kit prints a NOTE that there are too few logical errors, add `--rounds 20` or more shots.
+
+### B. Health: what changed since calibration (≈7 circuits)
+
+```bash
+syndromics-ibm-demo health --backend ibm_kingston --yes
+```
+
+Covers the chip with disjoint lines of qubits (115 of 156 on Kingston) and runs all of them in one
+job. The fit starts from **IBM's own calibration** and reports only components clearly worse than
+their own calibrated value (≥2× and ≥4σ). Writes `results/chip_health.json`.
+
+*What to look for:* if nothing has drifted, it reports **no changes**: a valid and useful result. If
+it flags components, they can be checked with a targeted single-qubit or two-qubit characterisation.
+
+### C. A/B: default vs Syndromics placement (6 circuits)
+
+```bash
+syndromics-ibm-demo ab --backend ibm_kingston --yes
+```
+
+For each circuit (default: GHZ-12, Grover-3, QFT-5), Qiskit transpiles twice at optimisation level
+3: once with IBM's published calibration, once with the Target corrected by step B. Both versions run
+in the same job, so they share conditions. The output is Hellinger fidelity to the ideal result.
+
+*What to look for:* where step B found changes on the qubits Qiskit prefers, Syndromics should score
+higher. Where it found none, both layouts are identical and the scores differ only by shot noise; the
+report says so.
+
+### Report
+
+```bash
+syndromics-ibm-demo report      # writes results/report.html
+```
+
+## Options
+
+| Option | Default | Meaning |
+|---|---|---|
+| `--backend NAME` | `ibm_kingston` | any backend from `check` |
+| `--instance CRN` | saved default | a different IBM Quantum instance |
+| `--shots N` | 30,000 / 50,000 / 4,000 | per circuit, for validate / health / ab |
+| `--sparsity S` | 0.5 | validate / reanalyse: fit regularisation; 0 lets every component move |
+| `--fake` | off | local simulator with IBM's published noise; no account, no QPU |
+| `--max-lines N`, `--line-length L` | all, 19 | health: fewer or shorter lines (quick test) |
+| `--circuits "A; B"` | GHZ-12; Grover-3; QFT-5 | ab: plain-English circuit list (see `syndromics place --help`) |
+
+## Notes and limits
+
+- The QPU-time estimate is rough. Actual usage appears in your IBM Quantum dashboard.
+- Diagnostic lines cover qubits along the lines and the couplers between them. Other couplers keep
+  IBM's published values.
+- The model is Pauli noise: leakage and coherent errors are not modelled yet.
+- In local `--fake` mode, health uses short lines for speed. Full noisy simulation of 19-qubit lines
+  is slow; real hardware is not.
+
+Questions or results: Vishal J Shah, CEO, Wish Apples Ventures Private Limited (Syndromics), ceo@wishapples.com.

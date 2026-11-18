@@ -1,0 +1,44 @@
+diagnostic lines: 7, covering 115/156 qubits
+
+Scenario A: drift on the qubits the default compiler prefers
+  hidden faults: readout q103=15%, q105=9%; TLS defect on q104 (its gates 4%); bad gate q142-q143 6%
+  Syndromics diagnosis: 3.5s compute, found 6 change(s) since calibration (18 known-bad items ignored):
+    q103       readout 0.1546, calibration says 0.0116 (13.3x)
+    q103-q104  gate 0.0459, calibration says 0.0016 (28.1x)
+    q104       readout 0.0124, calibration says 0.0048 (2.6x)
+    q104-q105  gate 0.0374, calibration says 0.0016 (22.7x)
+    q105       readout 0.0948, calibration says 0.0059 (16.2x)
+    q142-q143  gate 0.0597, calibration says 0.0013 (47.7x)
+
+  circuit                                 default  syndromics   oracle
+  GHZ state on 12 qubits                    0.646       0.877    0.877
+  Bernstein-Vazirani, secret 101101         0.950       0.950    0.950
+  QFT round trip on 5 qubits                0.762       0.964    0.964
+  Grover search for 101                     0.566       0.981    0.981
+  Quantum teleportation                     0.992       0.992    0.992
+  QAOA MaxCut on 6 nodes                    0.965       0.989    0.989
+
+Scenario B: 20 random drift patterns (6 faults anywhere on the chip), GHZ-12
+  trial  1: default 0.882  syndromics 0.882  oracle 0.882
+  trial  2: default 0.832  syndromics 0.877  oracle 0.877
+  trial  3: default 0.882  syndromics 0.877  oracle 0.882
+  trial  4: default 0.760  syndromics 0.875  oracle 0.875
+  trial  5: default 0.882  syndromics 0.882  oracle 0.882
+  trial  6: default 0.798  syndromics 0.861  oracle 0.868
+  trial  7: default 0.882  syndromics 0.882  oracle 0.882
+  trial  8: default 0.838  syndromics 0.875  oracle 0.875
+  trial  9: default 0.787  syndromics 0.875  oracle 0.875
+  trial 10: default 0.882  syndromics 0.882  oracle 0.882
+  trial 11: default 0.810  syndromics 0.875  oracle 0.875
+  trial 12: default 0.882  syndromics 0.882  oracle 0.882
+  trial 13: default 0.882  syndromics 0.882  oracle 0.882
+  trial 14: default 0.882  syndromics 0.882  oracle 0.882
+  trial 15: default 0.882  syndromics 0.882  oracle 0.882
+  trial 16: default 0.785  syndromics 0.875  oracle 0.875
+  trial 17: default 0.807  syndromics 0.875  oracle 0.875
+  trial 18: default 0.802  syndromics 0.875  oracle 0.875
+  trial 19: default 0.882  syndromics 0.882  oracle 0.882
+  trial 20: default 0.882  syndromics 0.882  oracle 0.882
+  mean: default 0.846  syndromics 0.878  oracle 0.878   (better in 9, same in 11, worse in 0)
+
+Control (no drift, GHZ-12): default 0.882  syndromics 0.882  oracle 0.882  | false alarms: 0

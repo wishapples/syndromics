@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "Syndromics: chip diagnostics from quantum error-correction syndrome data"
+authors:
+  - name: "Syndromics (Wish Apples Ventures Private Limited)"
+version: 0.4.3
+date-released: 2026-11-18
+license: MIT
+repository-code: "https://github.com/syndromics/syndromics"
+keywords:
+  - quantum error correction
+  - surface code
+  - qubit characterisation
