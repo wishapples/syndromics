@@ -1,7 +1,6 @@
 
 
 # Syndromics
-
 [![tests](https://github.com/wishapples/syndromics/actions/workflows/tests.yml/badge.svg)](https://github.com/wishapples/syndromics/actions/workflows/tests.yml)
 
 **Measure a quantum chip's real noise from its own error-correction data.**
