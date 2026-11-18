@@ -2,6 +2,12 @@
 
 Syndromics is updated continuously. Every hardware finding becomes a feature and an automated test.
 
+## 0.5.1 (18 November 2026)
+
+- `syndromics-ibm-demo validate --line ...` runs on chosen qubits, so a second run can reuse the first run's line.
+- `syndromics-ibm-demo compare-runs --previous DIR`: prospective test. Freezes the noise model and adaptive
+  settings learned on an earlier run, decodes the new run, and lists components that changed between runs.
+
 ## 0.5.0 (18 November 2026): adaptive learning
 
 - **Leakage-aware, per-shot adaptive decoding** (`syndromics.adaptive`). When one measure qubit fires at least

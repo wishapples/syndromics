@@ -194,4 +194,23 @@ syndromics-ibm-demo report      # writes results/report.html
 - In local `--fake` mode, health uses short lines for speed. Full noisy simulation of 19-qubit lines
   is slow; real hardware is not.
 
+## 5. Second run: test everything learned on a fresh run (prospective test)
+
+A held-out half of the same job is a good test; a new job hours or days later is a stronger one. Run the
+validation again **on the same qubits**, in a new folder, then decode the new run with the model and adaptive
+settings frozen from the first run:
+
+```bash
+mkdir run2 && cd run2
+syndromics-ibm-demo validate --backend ibm_kingston --line 117,105,106,107,108,109,118,129,128 --yes
+syndromics-ibm-demo compare-runs --previous ../example_ibm_kingston_2026-11-18
+syndromics-ibm-demo reanalyse        # run 2's own held-out test, for comparison
+```
+
+`compare-runs` (no QPU time) prints the logical error on run 2 with: IBM's calibration at run 2, IBM's
+calibration at run 1, the Syndromics model frozen from run 1, and Syndromics + adaptive frozen from run 1.
+It also lists components that changed between the runs (drift) and the erratic-measure-qubit rate in run 2.
+Splitting our own job into two halves as a dry run gave: calibration 0.427%, frozen Syndromics 0.207%,
+frozen Syndromics + adaptive 0.113%, no component changes.
+
 Questions or results: Vishal J Shah, CEO, Wish Apples Ventures Private Limited (Syndromics), ceo@wishapples.com.

@@ -338,7 +338,16 @@ def step_validate(a):
     from qiskit import transpile
     backend, sampler, label = get_backend(a)
     L = 2 * a.n_data - 1
-    line = ibm.find_line(backend, L)
+    if getattr(a, "line", None):
+        line = [int(q) for q in a.line.replace(" ", "").split(",")]
+        if len(line) != L:
+            sys.exit(f"--line needs {L} qubits for --n-data {a.n_data}, got {len(line)}")
+        edges = {tuple(sorted(e)) for e in backend.coupling_map.get_edges()}
+        bad = [(x, y) for x, y in zip(line, line[1:]) if tuple(sorted((x, y))) not in edges]
+        if bad:
+            sys.exit(f"--line is not a connected path on {backend.name}: no coupler for {bad}")
+    else:
+        line = ibm.find_line(backend, L)
     print(f"Backend: {label}\nQubits (line order): {line}\nCalibration last updated: {calibration_time(backend)}")
     refs = reference_circuits(L, a.ref_rounds)
     # IBM's sampler requires the same shot count for every circuit in a job: all 5 use a.shots
@@ -378,6 +387,38 @@ def step_reanalyse(a):
     cfg = json.load(open(os.path.join(RESULTS, "A_config.json")))
     print(f"Re-analysing job {cfg['job_id']} on {cfg['meta']['backend']} ({cfg['meta']['run_at_utc']})")
     report_validation(raw, cfg, a.sparsity, "A_validate.json")
+
+
+def step_compare_runs(a):
+    """Prospective test, no QPU: freeze the model and adaptive settings learned on an earlier run, decode this run."""
+    prev = a.previous
+    if os.path.isdir(os.path.join(prev, RESULTS)):
+        prev = os.path.join(prev, RESULTS)
+    p_raw = dict(np.load(os.path.join(prev, "A_raw.npz"))); p_cfg = json.load(open(os.path.join(prev, "A_config.json")))
+    n_raw = dict(np.load(os.path.join(RESULTS, "A_raw.npz"))); n_cfg = json.load(open(os.path.join(RESULTS, "A_config.json")))
+    print(f"Run 1: job {p_cfg['job_id']} ({p_cfg['meta']['run_at_utc']})\nRun 2: job {n_cfg['job_id']} ({n_cfg['meta']['run_at_utc']})")
+    try:
+        r = adaptive.compare_runs(p_raw["rep"], p_cfg, n_raw["rep"], n_cfg, _models, sparsity=a.sparsity)
+    except ValueError as e:
+        sys.exit(f"Cannot compare: {e}")
+    n = r["shots_run2"]
+    print(f"\n=== Decoding run 2 ({n:,} shots) with everything frozen from run 1 ===")
+    rows = [("IBM calibration at run 2", "run2_calibration"), ("IBM calibration at run 1", "run1_calibration"),
+            ("Syndromics model from run 1 (frozen)", "frozen_syndromics"),
+            (f"Syndromics + adaptive from run 1 (frozen: k={r['frozen_settings']['k']}, boost={r['frozen_settings']['boost']})", "frozen_syndromics_la")]
+    base = r["run2_calibration"]["rate"]
+    for lab, k in rows:
+        v = r[k]
+        print(f"  {lab:62s} {v['errors']:4d} errors = {v['rate']*100:.3f}%   {'baseline' if k == 'run2_calibration' else format((v['rate']/base-1)*100, '+.0f') + '%'}")
+    print("\n=== Components that changed between the runs ===")
+    for c in r["component_changes"]:
+        print(f"  {c['component']:34s} x{c['run1']:.1f} -> x{c['run2']:.1f} calibration (z = {c['z']:+.1f})")
+    if not r["component_changes"]:
+        print("  none: the line behaved the same in both runs")
+    b = r["bursts_run2"]
+    print(f"\n=== Erratic-measure-qubit shots in run 2: {b['real']*100:.2f}% (model predicts {b['model']*100:.3f}%) ===")
+    print("\nFor the run-2-only held-out test, run: syndromics-ibm-demo reanalyse")
+    save("B_compare_runs.json", {"run1": p_cfg["job_id"], "run2": n_cfg["job_id"], **r})
 
 
 def step_health(a):
@@ -511,6 +552,7 @@ def main(argv=None):
     sub = ap.add_subparsers(dest="step", required=True)
     for name, fn, shots, extra in (("check", step_check, 0, False), ("rehearse", step_rehearse, 0, False),
                                    ("reanalyse", step_reanalyse, 0, False),
+                                   ("compare-runs", step_compare_runs, 0, False),
                                    ("validate", step_validate, 30000, True), ("health", step_health, 50000, True),
                                    ("ab", step_ab, 4000, True), ("report", step_report, 0, False)):
         p = sub.add_parser(name)
@@ -523,9 +565,12 @@ def main(argv=None):
             p.add_argument("--shots", type=int, default=shots)
             p.add_argument("--rounds", type=int, default=10 if name == "validate" else 6)
         if name == "validate":
+            p.add_argument("--line", help="comma-separated qubits to use, e.g. 117,105,106,107,108,109,118,129,128 (default: best line)")
             p.add_argument("--n-data", type=int, default=5)
             p.add_argument("--ref-rounds", type=int, default=6)
-        if name in ("validate", "reanalyse"):
+        if name == "compare-runs":
+            p.add_argument("--previous", required=True, help="folder of the earlier run (containing results/ or the results folder itself)")
+        if name in ("validate", "reanalyse", "compare-runs"):
             p.add_argument("--sparsity", type=float, default=0.5,
                            help="0.5 = tuned for recovering IBM calibration; 0 = every component free")
         if name == "health":
