@@ -21,11 +21,13 @@ import pymatching
 from . import ibm
 from .model import fit_noise
 
-MODELS = ("uniform", "calibration", "reweighting", "syndromics")
+MODELS = ("uniform", "calibration", "reweighting", "syndromics", "reweighting_la", "syndromics_la")
 LABELS = {"uniform": "Uniform (no device data)",
           "calibration": "Device calibration",
           "reweighting": "Standard correlation re-weighting",
-          "syndromics": "Syndromics noise model"}
+          "syndromics": "Syndromics noise model",
+          "reweighting_la": "Re-weighting + leakage-aware",
+          "syndromics_la": "Syndromics + leakage-aware"}
 
 
 def _detectors(circ, meas):
@@ -53,8 +55,9 @@ def _matching_edges(circ):
     return edges
 
 
-def reweighting_matching(circ, det_train):
-    """Model-free baseline: edge probabilities estimated from detection-event correlations (p_ij)."""
+def reweighting_matching(circ, det_train, boost_pos=None, boost=1.0, pos=None):
+    """Model-free baseline: edge probabilities estimated from detection-event correlations (p_ij).
+    boost_pos: multiply the time-like edges of that measure qubit by `boost` (leakage-aware decoding)."""
     edges = _matching_edges(circ)
     X = det_train.astype(float)
     p1 = X.mean(0)
@@ -73,6 +76,8 @@ def reweighting_matching(circ, det_train):
             pe[e] = float(min(max(0.5 - 0.5 * (1 - 2 * p1[i]) / prod, 1e-6), 0.49))
     m = pymatching.Matching()
     for e, p in pe.items():
+        if boost_pos is not None and len(e) == 2 and pos[e[0]] == pos[e[1]] == boost_pos:
+            p = min(p * boost, 0.45)
         kw = dict(fault_ids={0} if edges[e] else set(), weight=float(np.log((1 - p) / p)),
                   error_probability=p, merge_strategy="independent")
         if len(e) == 2:
@@ -86,7 +91,7 @@ def _matching(circ):
     return pymatching.Matching.from_detector_error_model(circ.detector_error_model(decompose_errors=True))
 
 
-def compare(meas, n_data, rounds, uniform, calibrated, *, splits=5, seed=100, sparsity=0.5):
+def compare(meas, n_data, rounds, uniform, calibrated, *, splits=5, seed=100, sparsity=0.5, leakage_aware=True):
     """meas: (shots, n_meas) raw repetition-code measurements. uniform/calibrated: (readout, gate2, idle) dicts.
     Returns {"tests": [...], "mean": {model: ler}, "shots": n, "raw_flip_rate": x}."""
     uni_c = ibm.rep_code_stim(n_data, rounds, *uniform)
@@ -106,9 +111,15 @@ def compare(meas, n_data, rounds, uniform, calibrated, *, splits=5, seed=100, sp
         def ler(m):
             return float((m.decode_batch(D[te])[:, 0] != O[te]).mean())
         syn = fit_noise(cal_c, D[tr].astype(np.uint8), sparsity=sparsity, crosstalk=False).calibrated_circuit()
-        out.append({"test": name, "uniform": ler(m_uni), "calibration": ler(m_cal),
-                    "reweighting": ler(reweighting_matching(uni_c, D[tr])), "syndromics": ler(_matching(syn))})
-    mean = {k: float(np.mean([t[k] for t in out])) for k in MODELS}
+        row = {"test": name, "uniform": ler(m_uni), "calibration": ler(m_cal),
+               "reweighting": ler(reweighting_matching(uni_c, D[tr])), "syndromics": ler(_matching(syn))}
+        if leakage_aware:
+            from .adaptive import fit_leakage_aware
+            for key, meth in (("syndromics_la", "syndromics"), ("reweighting_la", "reweighting")):
+                dec = fit_leakage_aware(cal_c, D[tr], O[tr], method=meth, sparsity=sparsity)
+                row[key] = ler(dec)
+        out.append(row)
+    mean = {k: float(np.mean([t[k] for t in out])) for k in MODELS if k in out[0]}
     return {"tests": out, "mean": mean, "shots": n, "test_shots": n - h,
             "raw_flip_rate": float(O.mean()), "sparsity": sparsity}
 
@@ -142,13 +153,17 @@ def format_comparison(res):
     lines = [f"Held-out decoding test: {len(res['tests'])} tests, each fits on {res['shots'] - res['test_shots']:,} shots "
              f"and decodes the other {res['test_shots']:,}.",
              f"  {'Noise model given to the decoder':38s} {'logical error':>13s}  {'vs calibration':>14s}"]
-    for k in MODELS:
+    for k in [k for k in MODELS if k in m]:
         ch = "baseline" if k == "calibration" else f"{(m[k] / m['calibration'] - 1) * 100:+.0f}%"
         lines.append(f"  {LABELS[k]:38s} {m[k] * 100:12.3f}%  {ch:>14s}")
     lines.append("  per test (calibration -> Syndromics): " +
                  ", ".join(f"{t['calibration'] * 100:.3f}->{t['syndromics'] * 100:.3f}" for t in res["tests"]))
     wins = sum(t["syndromics"] < t["calibration"] for t in res["tests"])
     lines.append(f"  Syndromics beat the calibration in {wins} of {len(res['tests'])} tests.")
+    if "syndromics_la" in m:
+        w2 = sum(t["syndromics_la"] < t["syndromics"] for t in res["tests"])
+        lines.append(f"  Leakage-aware decoding improved on Syndromics in {w2} of {len(res['tests'])} tests "
+                     "(per shot: distrust a measure qubit that fires >= k detection events; settings chosen on training data).")
     n_err = m["calibration"] * res["test_shots"]
     if n_err < 20:
         lines.append(f"  NOTE: only ~{n_err:.0f} logical errors per test with the calibration model: too few to compare models.")

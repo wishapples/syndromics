@@ -24,12 +24,23 @@ PyMatching decoder throughout.
 | IBM published calibration | 0.396% |
 | Standard correlation re-weighting (literature) | 0.199% |
 | **Syndromics** | **0.198%** (better than calibration in 6 of 6 splits) |
+| Re-weighting + leakage-aware (v0.5) | 0.103% |
+| **Syndromics + leakage-aware (v0.5)** | **0.103%** (better than Syndromics alone in 6 of 6 splits) |
 
 ![Logical error on held-out shots for each split](docs/k_decode.svg)
 
 The fit localised the main excess error at the **q128-q129** end of the line (that gate at least
 4x its calibrated error; q128 has the lowest T2 on the line in IBM's data), and found mid-circuit
 measure + reset 1.7-5x worse than IBM's published end-of-circuit readout.
+
+**What drives the remaining errors.** In 2.3% of real shots one measure qubit fires six or more
+detection events, near-random behaviour typical of leakage or a failed reset; a Pauli noise model
+predicts 0.04% (62x fewer). These shots cause about half the logical failures. Leakage-aware
+decoding (`syndromics.adaptive`) flags them per shot from their own syndrome and stops trusting
+that qubit's measurements for that shot, halving the logical error again. The trick works with
+any decoder model. Drift tracking over time windows (fresh fit per window, alerts confirmed in two
+windows) found the components stable during this job; on simulated drift it catches a gate x4 or
+measurement x3 change within one window with no false alarms.
 
 **Stated plainly:** model-free correlation re-weighting matches our decoding gain on this small
 code. What Syndromics adds is a physical model that names the component responsible, for placement,

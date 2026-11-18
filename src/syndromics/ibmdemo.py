@@ -26,7 +26,7 @@ import time
 
 import numpy as np
 
-from . import __version__, copilot, decodecheck, ibm, placement as pl
+from . import __version__, adaptive, copilot, decodecheck, ibm, placement as pl
 
 RESULTS = "results"
 
@@ -301,13 +301,34 @@ def report_validation(raw, cfg, sparsity, out_name):
     else:
         print("  A repetition code localises a fault well (which qubit or pair) but splits it only roughly between a")
         print("  qubit's measurement and its neighbouring gate; treat large ratios as 'look here', not exact values.")
-    print("\n=== 3. Detail: per-qubit measurement error (for reference) ===")
+    print("\n=== 3. Shots where a measure qubit behaves randomly (leakage-like bursts) ===")
+    cal_c = ibm.rep_code_stim(cfg["n_data"], cfg["rounds"], *cal)
+    Dd, _ = decodecheck._detectors(cal_c, raw["rep"])
+    bs = adaptive.burst_stats(cal_c, Dd)
+    print(f"  shots where one measure qubit fires >= {bs['k']} detection events: real {bs['real']*100:.2f}%, "
+          f"noise model predicts {bs['model']*100:.3f}% ({bs['real']/max(bs['model'],1e-6):.0f}x)")
+    print("  per measure qubit: " + ", ".join(f"q{cfg['line'][a]} {r*100:.2f}%" for a, r in zip(bs["anc"], bs["per_qubit_real"])))
+    print("  Leakage-aware decoding (section 1) handles these shots one by one from their own syndromes.")
+    print("\n=== 4. Drift during the job (6 time windows, fresh fit per window) ===")
+    W = len(Dd) // 6
+    table, alerts = adaptive.track_drift(cal_c, [Dd[i*W:(i+1)*W] for i in range(6)], cfg["line"])
+    tops = [r["component"] for r in ch[:4]]
+    for r in ch[:4]:
+        c = next(c for c in table[0] if adaptive._name(c, cfg["line"]) == r["component"])
+        print(f"  {r['component']:34s} " + " ".join(f"{row[c]:5.1f}" for row in table) + "   (x calibration, per window)")
+    if alerts:
+        for a in alerts:
+            print(f"  ALERT window {a['window']} (first seen {a['first_seen']}): {a['component']} {a['before']:.1f}x -> {a['now']:.1f}x calibration")
+    else:
+        print("  no confirmed drift alerts: the components were stable over this job")
+    drift = {"alerts": alerts, "windows": [{adaptive._name(c, cfg["line"]): v for c, v in row.items()} for row in table]}
+    print("\n=== 5. Detail: per-qubit measurement error (for reference) ===")
     print("  Syndromics measures the effective per-round error of each measurement (measure + reset + gate errors),")
     print("  which is larger than the end-of-circuit readout IBM publishes; the 'today' columns were measured in the same job.")
     rows, gates, stats = analyse_validation(raw, cfg, sparsity)
     print_validation(rows, gates, stats)
     return save(out_name, {"meta": cfg["meta"], "job_id": cfg["job_id"], "line": cfg["line"], "rounds": cfg["rounds"],
-                           "shots": cfg["shots"], "decoding": cmp_, "changed_components": ch,
+                           "shots": cfg["shots"], "decoding": cmp_, "changed_components": ch, "bursts": bs, "drift": drift,
                            "agreement": stats, "rows": rows, "gates": gates})
 
 
@@ -439,7 +460,7 @@ def step_report(a):
                          f"Each of {len(dec['tests'])} tests fits the noise model on half the shots and decodes the other half (PyMatching).</p>"
                          "<table><tr><th>Noise model given to the decoder</th><th>Logical error (mean)</th><th>vs calibration</th></tr>" +
                          "".join(f"<tr><td>{'<b>' if k == 'syndromics' else ''}{e(LABELS[k])}{'</b>' if k == 'syndromics' else ''}</td><td>{mm[k]*100:.3f}%</td>"
-                                 f"<td>{'baseline' if k == 'calibration' else format((mm[k]/mm['calibration']-1)*100, '+.0f') + '%'}</td></tr>" for k in MODELS) +
+                                 f"<td>{'baseline' if k == 'calibration' else format((mm[k]/mm['calibration']-1)*100, '+.0f') + '%'}</td></tr>" for k in MODELS if k in mm) +
                          f"</table><p>Syndromics beat the calibration in <b>{wins} of {len(dec['tests'])}</b> tests.</p>")
             parts.append("<h3>Components worse than calibration</h3>" + ("<table><tr><th>Component</th><th>Ratio</th><th>Calibration</th><th>Measured</th></tr>" +
                          "".join(f"<tr><td>{e(r['component'])}</td><td>&times;{r['ratio']:.1f}</td><td>{r['calibration']:.4f}</td><td>{r['measured']:.4f}</td></tr>" for r in ch) +

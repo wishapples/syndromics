@@ -16,7 +16,8 @@ def test_demo_steps_on_fake_backend(tmp_path, monkeypatch):
     a = json.load(open("results/A_validate.json"))
     assert a["meta"]["fake"] and a["agreement"]["syndromics_vs_today_reference"] > 0.8
     assert os.path.exists("results/A_raw.npz")
-    assert set(a["decoding"]["mean"]) == {"uniform", "calibration", "reweighting", "syndromics"}
+    assert set(a["decoding"]["mean"]) == {"uniform", "calibration", "reweighting", "syndromics", "reweighting_la", "syndromics_la"}
+    assert "bursts" in a and "drift" in a
     assert len(a["decoding"]["tests"]) == 6
     ibmdemo.main(["reanalyse", "--sparsity", "2"])
     assert json.load(open("results/A_validate.json"))["decoding"]["sparsity"] == 2.0

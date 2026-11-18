@@ -76,28 +76,34 @@ cd example_ibm_kingston_2026-11-18
 syndromics-ibm-demo reanalyse
 ```
 
-Expected output (a few seconds):
+Expected output (about 20 seconds), abridged:
 
 ```
 === 1. Does the measured noise model decode better? ===
-Held-out decoding test: 6 tests, each fits on 15,000 shots and decodes the other 15,000.
   Noise model given to the decoder       logical error  vs calibration
   Uniform (no device data)                      0.447%            +13%
   Device calibration                            0.396%        baseline
   Standard correlation re-weighting             0.199%            -50%
   Syndromics noise model                        0.198%            -50%
+  Re-weighting + leakage-aware                  0.103%            -74%
+  Syndromics + leakage-aware                    0.103%            -74%
   Syndromics beat the calibration in 6 of 6 tests.
+  Leakage-aware decoding improved on Syndromics in 6 of 6 tests ...
 
 === 2. Components worse than the calibration says (fit on all shots) ===
   q129-q128 two-qubit gate           x17.2 +/- 0.6   (calibration 0.0012, measured 0.0201)
   q105 measurement                   x4.3 +/- 0.1   (calibration 0.0020, measured 0.0083)
-  q108-q109 two-qubit gate           x3.3 +/- 0.6   (calibration 0.0013, measured 0.0042)
-  q109 measurement                   x2.8 +/- 0.1   (calibration 0.0044, measured 0.0125)
-  q128 measurement                   x2.3 +/- 0.1   (calibration 0.0073, measured 0.0168)
+  ...
+=== 3. Shots where a measure qubit behaves randomly (leakage-like bursts) ===
+  shots where one measure qubit fires >= 6 detection events: real 2.26%, noise model predicts 0.037% (62x)
+=== 4. Drift during the job (6 time windows, fresh fit per window) ===
+  no confirmed drift alerts: the components were stable over this job
 ```
 
 How to read it: the decoder given the Syndromics model made **half as many logical errors** as the one
-given IBM's calibration, in every one of six train/test splits (five random, one time-ordered). Standard
+given IBM's calibration, in every one of six train/test splits (five random, one time-ordered).
+Leakage-aware decoding then halves it again: shots where one measure qubit behaves randomly (62x more
+common than a Pauli model predicts) are flagged per shot and that qubit's measurements are distrusted. Standard
 model-free correlation re-weighting does equally well on this small code; we say so plainly. What Syndromics
 adds is the **physical attribution** (section 2): it points at the q128-q129 end of the line, where IBM's own
 data shows q128 with the lowest T2. A repetition code localises a fault well but splits it only roughly between
