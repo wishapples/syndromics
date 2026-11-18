@@ -10,7 +10,7 @@
 3. Install and run:
 
    ```bash
-   pip install "syndromics[google] @ git+https://github.com/syndromics/syndromics.git"
+   pip install "syndromics[google] @ git+https://github.com/wishapples/syndromics.git"
    syndromics google ~/data/willow --rounds 10 --limit 4      # quick first look
    syndromics google ~/data/willow --rounds 10                # everything
    ```
@@ -34,7 +34,7 @@ for distance 5 and 7. Add `--no-crosstalk` to go faster.
 2. Save it once:
 
    ```bash
-   pip install "syndromics[ibm] @ git+https://github.com/syndromics/syndromics.git"
+   pip install "syndromics[ibm] @ git+https://github.com/wishapples/syndromics.git"
    python -c "from qiskit_ibm_runtime import QiskitRuntimeService as S; S.save_account(channel='ibm_cloud', token='YOUR_KEY', set_as_default=True)"
    ```
 
