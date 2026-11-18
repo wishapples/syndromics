@@ -8,7 +8,8 @@ measurements, gates and qubits are worse than their calibration says. Decoders g
 weights, and engineers see what has drifted. It needs no extra calibration experiments.
 
 Website: [syndromics.wishapples.com](https://syndromics.wishapples.com) ·
-Technical note: [docs/notes/Syndromics_Kingston_Technical_Note.pdf](docs/notes/Syndromics_Kingston_Technical_Note.pdf)
+Technical note: [docs/notes/Syndromics_Kingston_Technical_Note.pdf](docs/notes/Syndromics_Kingston_Technical_Note.pdf) ·
+What's new: [CHANGELOG.md](CHANGELOG.md)
 
 ## First result on real IBM hardware (18 November 2026)
 
@@ -27,7 +28,9 @@ PyMatching decoder throughout.
 | Re-weighting + leakage-aware (v0.5) | 0.103% |
 | **Syndromics + leakage-aware (v0.5)** | **0.103%** (better than Syndromics alone in 6 of 6 splits) |
 
-![Logical error on held-out shots for each split](docs/k_decode.svg)
+![Logical error on held-out shots for each split](docs/k_decode5.svg)
+
+![Erratic measure qubits: real shots vs fitted model](docs/k_burst.svg)
 
 The fit localised the main excess error at the **q128-q129** end of the line (that gate at least
 4x its calibrated error; q128 has the lowest T2 on the line in IBM's data), and found mid-circuit
