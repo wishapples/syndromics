@@ -2,6 +2,17 @@
 
 Syndromics is updated continuously. Every hardware finding becomes a feature and an automated test.
 
+## 0.6.0 (19 November 2026): transfer test
+
+- `compare-runs` now also handles a **different circuit** in run 2 (more rounds, or a shorter code on part of run 1's
+  line). It decodes run 2 with the model frozen from run 1 and compares it with correlation re-weighting learned on
+  1,000 / 3,000 / 15,000 shots of the new circuit (`adaptive.transfer_runs`).
+- Simulated check (truth = model fitted on real Kingston data): d=3, 20 rounds on q108-q128, transferred model 0.29% vs
+  calibration 1.06% vs re-weighting on 15,000 new shots 0.50%. Not yet run on hardware.
+- New test `test_transfer_to_shorter_code_on_part_of_the_line`.
+- `examples/cudaq_qec_export.py`: Syndromics noise model inside NVIDIA CUDA-Q QEC (0.9.0) decoders. Run 2, CUDA-Q QEC
+  PyMatching: calibration 123 errors, frozen Syndromics 51. GPU decoders need a GPU; not yet run.
+
 ## 0.5.2 (19 November 2026): second hardware run
 
 - **Prospective test on a second day.** Run 2 on the same `ibm_kingston` qubits (job `dbvc3lv82tmc73dupa7g`),

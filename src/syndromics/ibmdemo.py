@@ -397,6 +397,8 @@ def step_compare_runs(a):
     p_raw = dict(np.load(os.path.join(prev, "A_raw.npz"))); p_cfg = json.load(open(os.path.join(prev, "A_config.json")))
     n_raw = dict(np.load(os.path.join(RESULTS, "A_raw.npz"))); n_cfg = json.load(open(os.path.join(RESULTS, "A_config.json")))
     print(f"Run 1: job {p_cfg['job_id']} ({p_cfg['meta']['run_at_utc']})\nRun 2: job {n_cfg['job_id']} ({n_cfg['meta']['run_at_utc']})")
+    if any(p_cfg[k] != n_cfg[k] for k in ("line", "n_data", "rounds")):
+        return _report_transfer(p_raw, p_cfg, n_raw, n_cfg, a)
     try:
         r = adaptive.compare_runs(p_raw["rep"], p_cfg, n_raw["rep"], n_cfg, _models, sparsity=a.sparsity)
     except ValueError as e:
@@ -419,6 +421,35 @@ def step_compare_runs(a):
     print(f"\n=== Erratic-measure-qubit shots in run 2: {b['real']*100:.2f}% (model predicts {b['model']*100:.3f}%) ===")
     print("\nFor the run-2-only held-out test, run: syndromics-ibm-demo reanalyse")
     save("B_compare_runs.json", {"run1": p_cfg["job_id"], "run2": n_cfg["job_id"], **r})
+
+
+def _report_transfer(p_raw, p_cfg, n_raw, n_cfg, a):
+    """Run 2 is a different circuit (more rounds, or a shorter code on part of run 1's line): transfer test."""
+    try:
+        r = adaptive.transfer_runs(p_raw["rep"], p_cfg, n_raw["rep"], n_cfg, _models, sparsity=a.sparsity)
+    except ValueError as e:
+        sys.exit(f"Cannot compare: {e}")
+    r1, r2 = r["run1"], r["run2"]
+    print(f"\nTransfer test: model learned on run 1 (distance {r1['n_data']}, {r1['rounds']} rounds, {len(r1['line'])} qubits),\n"
+          f"used on a different circuit in run 2 (distance {r2['n_data']}, {r2['rounds']} rounds, qubits {r2['line']}).")
+    print(f"\n=== Logical error on {r['test_shots']:,} held-out run-2 shots (same shots for every row) ===")
+    base = r["run2_calibration"]["rate"]
+    def row(lab, v):
+        rel = "baseline" if v is r["run2_calibration"] else format((v['rate'] / base - 1) * 100, '+.0f') + '%'
+        print(f"  {lab:66s} {v['errors']:4d} errors = {v['rate']*100:.3f}%   {rel}")
+    print("  Needs no run-2 data:")
+    row("IBM calibration at run 2", r["run2_calibration"])
+    row("Syndromics model from run 1 (frozen, transferred)", r["frozen_syndromics"])
+    fs = r["frozen_settings"]
+    row(f"Syndromics + adaptive from run 1 (frozen: k={fs['k']}, boost={fs['boost']})", r["frozen_syndromics_la"])
+    print("  Learned on run 2's own training half (needs data from the new circuit):")
+    for v in r["reweighting_on_run2"]:
+        row(f"Correlation re-weighting, {v['train_shots']:,} run-2 shots", v)
+    row(f"Re-weighting + adaptive, {r['reweighting_la_on_run2']['train_shots']:,} run-2 shots", r["reweighting_la_on_run2"])
+    row(f"Syndromics refitted on {r['syndromics_on_run2']['train_shots']:,} run-2 shots (reference)", r["syndromics_on_run2"])
+    print("\nRead: if the transferred model is close to the models learned on run 2's own data, the physical model carries"
+          "\nover to a new circuit with no new training data. Small counts: check the error numbers, not only the rates.")
+    save("B_transfer.json", {"run1": p_cfg["job_id"], "run2": n_cfg["job_id"], **r})
 
 
 def step_health(a):

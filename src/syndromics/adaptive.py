@@ -191,3 +191,68 @@ def compare_runs(prev_rep, prev_cfg, new_rep, new_cfg, models_fn, *, sparsity=0.
     res["component_changes"] = sorted(changes, key=lambda r: -abs(r["z"]))
     res["bursts_run2"] = burst_stats(c2, D2)
     return res
+
+
+def _slice_model(m, off, L):
+    """Restrict a (readout, gate2, idle) model on a line to positions off..off+L-1, renumbered from 0."""
+    ro, g2, idle = m
+    return ({k - off: v for k, v in ro.items() if off <= k < off + L},
+            {(x - off, y - off): v for (x, y), v in g2.items() if off <= x and y < off + L},
+            {k - off: v for k, v in idle.items() if off <= k < off + L})
+
+
+def transfer_runs(prev_rep, prev_cfg, new_rep, new_cfg, models_fn, *, sparsity=0.5, seed=0,
+                  train_sizes=(1000, 3000, None)):
+    """Transfer test: a noise model learned on run 1 decodes a DIFFERENT circuit in run 2 (more rounds, or a
+    shorter code on part of the same line). Run 2's line must be a contiguous piece of run 1's line, starting on
+    a data qubit. Everything from run 1 is frozen. For comparison, correlation re-weighting is learned on run 2's
+    own shots (it needs data from the new circuit), with increasing amounts of training data. All models are scored
+    on the same held-out half of run 2."""
+    from . import ibm
+    la, lb = prev_cfg["line"], new_cfg["line"]
+    off = next((i for i in range(len(la) - len(lb) + 1) if la[i:i + len(lb)] == lb), None)
+    if off is None or off % 2:
+        raise ValueError("run 2's qubits must be a contiguous piece of run 1's line, starting on a data qubit "
+                         f"(run 1: {la}, run 2: {lb})")
+    nda, ra = prev_cfg["n_data"], prev_cfg["rounds"]
+    ndb, rb = new_cfg["n_data"], new_cfg["rounds"]
+    _, cal1 = models_fn(prev_cfg)
+    _, cal2 = models_fn(new_cfg)
+    c1 = ibm.rep_code_stim(nda, ra, *cal1)
+    D1, O1 = dc._detectors(c1, prev_rep)
+    fit1 = fit_noise(c1, D1.astype(np.uint8), sparsity=sparsity, crosstalk=False)
+    la1 = fit_leakage_aware(c1, D1, O1, sparsity=sparsity)
+    sc = {f.component: max(0.0, f.scale) for f in fit1.fits if f.component[0] != "xtalk"}
+
+    def shift(c):          # component of the run-2 circuit -> the same physical component in run 1
+        return (c[0],) + tuple(x + off for x in c[1:])
+    cb1 = ibm.rep_code_stim(ndb, rb, *_slice_model(cal1, off, len(lb)))   # run-1 calibration, run-2 circuit
+    cb2 = ibm.rep_code_stim(ndb, rb, *cal2)                               # run-2 calibration, run-2 circuit
+    frozen = rebuild(cb1, lambda c: sc.get(shift(c), 1.0))
+    pos, anc = _measure_detectors(cb2)
+    per = []
+    for a in anc:
+        s2 = lambda c, a=a: sc.get(shift(c), 1.0) * (la1.boost if c == ("spam", a) else 1.0)
+        per.append(dc._matching(rebuild(cb1, s2)))
+    frozen_la = PerShotDecoder(dc._matching(frozen), per, pos, anc, la1.k)
+
+    D2, O2 = dc._detectors(cb2, new_rep)
+    perm = np.random.default_rng(seed).permutation(len(D2)); h = len(D2) // 2
+    tr, te = perm[:h], perm[h:]
+
+    def ler(m):
+        e = int((m.decode_batch(D2[te])[:, 0] != O2[te]).sum())
+        return {"errors": e, "rate": e / len(te)}
+    res = {"offset": off, "run1": {"line": la, "n_data": nda, "rounds": ra},
+           "run2": {"line": lb, "n_data": ndb, "rounds": rb}, "test_shots": len(te),
+           "run2_calibration": ler(dc._matching(cb2)),
+           "frozen_syndromics": ler(dc._matching(frozen)),
+           "frozen_syndromics_la": ler(frozen_la),
+           "frozen_settings": {"boost": la1.boost, "k": la1.k}, "reweighting_on_run2": []}
+    for n in train_sizes:
+        idx = tr if n is None else tr[: min(n, len(tr))]
+        res["reweighting_on_run2"].append({"train_shots": len(idx), **ler(dc.reweighting_matching(cb2, D2[idx]))})
+    fit2 = fit_noise(cb2, D2[tr].astype(np.uint8), sparsity=sparsity, crosstalk=False)
+    res["syndromics_on_run2"] = {"train_shots": len(tr), **ler(dc._matching(fit2.calibrated_circuit(crosstalk=False)))}
+    res["reweighting_la_on_run2"] = {"train_shots": len(tr), **ler(fit_leakage_aware(cb2, D2[tr], O2[tr], method="reweighting"))}
+    return res

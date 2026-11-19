@@ -41,3 +41,33 @@ def test_gate_drift_detected_and_no_false_alarm():
     assert alerts[0]["first_seen"] == 4
     _, none = adaptive.track_drift(c, _windows(f, sc, {}, 11), line)
     assert none == []
+
+
+def test_transfer_to_shorter_code_on_part_of_the_line():
+    """A model learned on the d=5 line must carry over to a d=3 code with more rounds on the bad end of the line
+    (simulated from the model fitted on real Kingston data, so the true answer is known)."""
+    import json, os
+    from syndromics import ibm, ibmdemo
+    from syndromics.model import rebuild
+    here = os.path.join(os.path.dirname(__file__), "data")
+    cfg = json.load(open(os.path.join(here, "kingston_20261118_config.json")))
+    z = np.load(os.path.join(here, "kingston_20261118_rep.npz")); rep = np.unpackbits(z["rep"], axis=1)[:, : int(z["ncols"])]
+    _, cal = ibmdemo._models(cfg); c1 = ibm.rep_code_stim(5, 10, *cal)
+    D, _ = decodecheck._detectors(c1, rep)
+    f = fit_noise(c1, D.astype(np.uint8), sparsity=0.5, crosstalk=False)
+    sc = {x.component: max(0, x.scale) for x in f.fits if x.component[0] != "xtalk"}
+
+    def truth(nd, R, off):
+        cb = ibm.rep_code_stim(nd, R, *adaptive._slice_model(cal, off, 2 * nd - 1))
+        return rebuild(cb, lambda c: sc.get((c[0],) + tuple(v + off for v in c[1:]), 1.0))
+    rep_a = truth(5, 10, 0).compile_sampler(seed=1).sample(20000).astype(np.uint8)
+    rep_b = truth(3, 20, 4).compile_sampler(seed=2).sample(20000).astype(np.uint8)
+    cfg_b = dict(cfg, line=cfg["line"][4:9], n_data=3, rounds=20)
+    for key, m in (("calibrated", cal), ("uniform", ibmdemo._models(cfg)[0])):
+        ro, g2, idle = adaptive._slice_model(m, 4, 5)
+        cfg_b[key] = {"readout": {str(k): v for k, v in ro.items()}, "gate2": {f"{x}-{y}": v for (x, y), v in g2.items()},
+                      "idle": {str(k): v for k, v in idle.items()}}
+    r = adaptive.transfer_runs(rep_a, cfg, rep_b, cfg_b, ibmdemo._models, train_sizes=(1000, None))
+    assert r["offset"] == 4
+    assert r["frozen_syndromics"]["rate"] < 0.4 * r["run2_calibration"]["rate"]
+    assert r["frozen_syndromics"]["rate"] <= 1.5 * r["syndromics_on_run2"]["rate"] + 0.0005

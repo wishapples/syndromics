@@ -53,6 +53,11 @@ measure qubits). Run 2's own held-out test: calibration 0.404%, Syndromics 0.101
 Syndromics + leakage-aware 0.043%. The reverse direction (learn on run 2, test run 1) gives -64% and -79%.
 As on run 1, learned re-weighting matches the decoding gain; the physical attribution is what Syndromics adds.
 
+**Works inside NVIDIA CUDA-Q QEC.** The Syndromics model is a Stim circuit, so its detector error model loads
+directly into CUDA-Q QEC decoders ([examples/cudaq_qec_export.py](examples/cudaq_qec_export.py)). On run 2 with CUDA-Q
+QEC's PyMatching decoder: IBM calibration 123 errors (0.410%), Syndromics model frozen from run 1 51 errors (0.170%).
+CUDA-Q QEC's GPU decoders (e.g. `nv-qldpc-decoder`) need an NVIDIA GPU; not yet run.
+
 ![Logical error on held-out shots for each split](docs/k_decode5.svg)
 
 ![Erratic measure qubits: real shots vs fitted model](docs/k_burst.svg)

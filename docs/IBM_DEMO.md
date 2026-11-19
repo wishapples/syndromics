@@ -225,4 +225,24 @@ Our own second run (job `dbvc3lv82tmc73dupa7g`, 19 November 2026, 27 hours later
 The kit includes it as `example_ibm_kingston_2026-11-19/`: from that folder,
 `syndromics-ibm-demo compare-runs --previous ../example_ibm_kingston_2026-11-18` reproduces it with no account.
 
+
+## 6. Transfer test: does the model carry over to a different circuit?
+
+Correlation re-weighting learns numbers for one specific circuit, so a new circuit needs new training shots. A physical
+model describes the qubits and gates, so it should carry over. To test that, run a **different** circuit on part of the same
+line, here a distance-3 code with 20 rounds on the end of the line where the q128-q129 fault sits, and decode it with the
+model learned on the earlier run:
+
+```bash
+mkdir run3 && cd run3
+syndromics-ibm-demo validate --backend ibm_kingston --n-data 3 --rounds 20 --line 108,109,118,129,128 --yes
+syndromics-ibm-demo compare-runs --previous ../example_ibm_kingston_2026-11-19
+```
+
+`compare-runs` sees that the circuits differ and runs the transfer test. On the same held-out half of the new run it
+compares IBM's calibration and the transferred Syndromics model (no new training data) with correlation re-weighting
+learned on 1,000, 3,000 and 15,000 shots of the new circuit. On data simulated from the Kingston model (where the true
+answer is known), the transferred model reached 0.29% logical error against 1.06% for the calibration and 0.50% for
+re-weighting trained on 15,000 new shots. Real hardware has noise the model does not contain, so expect a smaller gap.
+
 Questions or results: Vishal J Shah, CEO, Wish Apples Ventures Private Limited (Syndromics), ceo@wishapples.com.
