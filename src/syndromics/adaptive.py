@@ -172,9 +172,11 @@ def compare_runs(prev_rep, prev_cfg, new_rep, new_cfg, models_fn, *, sparsity=0.
            "frozen_syndromics": ler(dc._matching(fit1.calibrated_circuit(crosstalk=False))),
            "frozen_syndromics_la": ler(la1),
            "frozen_settings": {"boost": la1.boost, "k": la1.k}}
-    # component changes between runs: unregularised fits from the same starting model
-    f1 = fit_noise(c1, D1.astype(np.uint8), sparsity=0.0, crosstalk=False)
-    f2 = fit_noise(c1, D2.astype(np.uint8), sparsity=0.0, crosstalk=False)
+    # component changes between runs: same regularised fit as the main report, from the same starting model.
+    # (An unregularised fit cannot separate a measurement error from its neighbouring gate, so it can report
+    # a "change" that is only the fit moving error between the two; see CHANGELOG 0.5.2.)
+    f1 = fit1
+    f2 = fit_noise(c1, D2.astype(np.uint8), sparsity=sparsity, crosstalk=False)
     s2 = {x.component: x for x in f2.fits}
     changes = []
     for x in f1.fits:

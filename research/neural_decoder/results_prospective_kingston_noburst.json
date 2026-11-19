@@ -1,0 +1,12 @@
+{
+ "burst_fraction": 0.0,
+ "shots_run2": 30000,
+ "calibration_run2": 123,
+ "syndromics_frozen": 55,
+ "adaptive_frozen": 17,
+ "neural_frozen": [
+  55,
+  55,
+  54
+ ]
+}

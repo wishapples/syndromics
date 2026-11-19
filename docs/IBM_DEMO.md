@@ -95,14 +95,14 @@ Expected output (about 20 seconds), abridged:
   q105 measurement                   x4.3 +/- 0.1   (calibration 0.0020, measured 0.0083)
   ...
 === 3. Shots where a measure qubit behaves randomly (leakage-like bursts) ===
-  shots where one measure qubit fires >= 6 detection events: real 2.26%, noise model predicts 0.037% (62x)
+  shots where one measure qubit fires >= 6 detection events: real 2.26%, noise model predicts about 0.03% (ratio varies by machine)
 === 4. Drift during the job (6 time windows, fresh fit per window) ===
   no confirmed drift alerts: the components were stable over this job
 ```
 
 How to read it: the decoder given the Syndromics model made **half as many logical errors** as the one
 given IBM's calibration, in every one of six train/test splits (five random, one time-ordered).
-Leakage-aware decoding then halves it again: shots where one measure qubit behaves randomly (62x more
+Leakage-aware decoding then halves it again: shots where one measure qubit behaves randomly (2.3% of shots, far more
 common than a Pauli model predicts) are flagged per shot and that qubit's measurements are distrusted. Standard
 model-free correlation re-weighting does equally well on this small code; we say so plainly. What Syndromics
 adds is the **physical attribution** (section 2): it points at the q128-q129 end of the line, where IBM's own
@@ -210,7 +210,19 @@ syndromics-ibm-demo reanalyse        # run 2's own held-out test, for comparison
 `compare-runs` (no QPU time) prints the logical error on run 2 with: IBM's calibration at run 2, IBM's
 calibration at run 1, the Syndromics model frozen from run 1, and Syndromics + adaptive frozen from run 1.
 It also lists components that changed between the runs (drift) and the erratic-measure-qubit rate in run 2.
-Splitting our own job into two halves as a dry run gave: calibration 0.427%, frozen Syndromics 0.207%,
-frozen Syndromics + adaptive 0.113%, no component changes.
+Our own second run (job `dbvc3lv82tmc73dupa7g`, 19 November 2026, 27 hours later, after IBM recalibrated) gave:
+
+```
+  IBM calibration at run 2                                        123 errors = 0.410%   baseline
+  IBM calibration at run 1                                        119 errors = 0.397%   -3%
+  Syndromics model from run 1 (frozen)                             55 errors = 0.183%   -55%
+  Syndromics + adaptive from run 1 (frozen: k=4, boost=40)         17 errors = 0.057%   -86%
+=== Components that changed between the runs ===
+  q107 measurement                   x1.3 -> x2.6 calibration (z = +4.4)
+  q108-q109 two-qubit gate           x3.3 -> x1.0 calibration (z = -4.0)
+```
+
+The kit includes it as `example_ibm_kingston_2026-11-19/`: from that folder,
+`syndromics-ibm-demo compare-runs --previous ../example_ibm_kingston_2026-11-18` reproduces it with no account.
 
 Questions or results: Vishal J Shah, CEO, Wish Apples Ventures Private Limited (Syndromics), ceo@wishapples.com.

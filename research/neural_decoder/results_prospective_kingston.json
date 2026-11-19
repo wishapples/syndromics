@@ -1,0 +1,18 @@
+{
+ "burst_fraction": 0.12,
+ "shots_run2": 30000,
+ "calibration_run2": 123,
+ "syndromics_frozen": 55,
+ "adaptive_frozen": 17,
+ "neural_frozen": [
+  9,
+  11,
+  11
+ ],
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "note": "Train on run 1 (job dbukcjvf8rhs73bmf9l0) only; test on all 30,000 shots of run 2 (job dbvc3lv82tmc73dupa7g). 1.5M simulated training shots per seed."
+}

@@ -2,6 +2,18 @@
 
 Syndromics is updated continuously. Every hardware finding becomes a feature and an automated test.
 
+## 0.5.2 (19 November 2026): second hardware run
+
+- **Prospective test on a second day.** Run 2 on the same `ibm_kingston` qubits (job `dbvc3lv82tmc73dupa7g`),
+  after IBM recalibrated. Frozen from run 1: Syndromics 0.183%, Syndromics + adaptive 0.057%, vs 0.410% for
+  run 2's fresh calibration. Frozen re-weighting gives the same (0.163%, 0.057%); stated plainly.
+- **Fix: `compare-runs` change list.** It used an unregularised fit, which cannot separate a measurement error from
+  its neighbouring gate, and reported a spurious "q117-q105 gate x7.9 -> x1.5" change. It now uses the same
+  regularised fit as the main report. Real change found: q107 measurement x1.3 -> x2.6.
+- Run 2 data added to `tests/data/`; new regression test `test_prospective_second_day_on_real_kingston`.
+- Burst ratios vary with the fitted model (62x, 75x, 19x); reports should quote the measured burst rate (2.3-2.4%).
+- Research: neural hybrid trained from run 1 only, 0.034% on run 2 (3 seeds); without bursts no gain.
+
 ## Research: neural decoder on real data (19 November 2026)
 
 - `research/neural_decoder/real_kingston.py`: neural hybrid decoder trained on simulated shots from the Syndromics

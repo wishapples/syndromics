@@ -32,6 +32,27 @@ PyMatching decoder throughout.
 | **Syndromics + leakage-aware (v0.5)** | **0.103%** (better than Syndromics alone in 6 of 6 splits) |
 | Neural hybrid (research, below) | 0.064% (5 of 6 splits better than leakage-aware, 1 tie) |
 
+## Second day: a prospective test (19 November 2026)
+
+Same qubits, 27 hours later, after IBM recalibrated `ibm_kingston` (job `dbvc3lv82tmc73dupa7g`).
+Everything was learned on run 1 and frozen, then all 30,000 shots of run 2 were decoded
+(`syndromics-ibm-demo compare-runs`):
+
+| Decoder (run 2, settings frozen from run 1) | Logical error |
+|---|---|
+| IBM calibration from the morning of run 2 | 0.410% (123 errors) |
+| Standard correlation re-weighting, frozen | 0.163% |
+| **Syndromics model, frozen** | **0.183%** |
+| Re-weighting + leakage-aware, frozen | 0.057% |
+| **Syndromics + leakage-aware, frozen** | **0.057%** (17 errors, 7x fewer than calibration) |
+| Neural hybrid trained from run 1 (research, 3 seeds) | 0.034% |
+
+The q128-q129 fault persisted (about 17x calibration on run 1, about 15x on run 2) and is still not
+visible in IBM's new calibration. The burst rate held too (2.26% and 2.43% of shots, the same four
+measure qubits). Run 2's own held-out test: calibration 0.404%, Syndromics 0.101%, re-weighting 0.139%,
+Syndromics + leakage-aware 0.043%. The reverse direction (learn on run 2, test run 1) gives -64% and -79%.
+As on run 1, learned re-weighting matches the decoding gain; the physical attribution is what Syndromics adds.
+
 ![Logical error on held-out shots for each split](docs/k_decode5.svg)
 
 ![Erratic measure qubits: real shots vs fitted model](docs/k_burst.svg)
@@ -42,7 +63,7 @@ measure + reset 1.7-5x worse than IBM's published end-of-circuit readout.
 
 **What drives the remaining errors.** In 2.3% of real shots one measure qubit fires six or more
 detection events, near-random behaviour typical of leakage or a failed reset; a Pauli noise model
-predicts 0.04% (62x fewer). These shots cause about half the logical failures. Leakage-aware
+predicts far fewer (0.03-0.13% depending on the fitted model; quote the measured rate, not the ratio). These shots cause about half the logical failures. Leakage-aware
 decoding (`syndromics.adaptive`) flags them per shot from their own syndrome and stops trusting
 that qubit's measurements for that shot, halving the logical error again. The trick works with
 any decoder model. Drift tracking over time windows (fresh fit per window, alerts confirmed in two
@@ -55,8 +76,7 @@ decoding in 5 of 6 splits). Without the simulated bursts it gains nothing. See [
 
 **Stated plainly:** model-free correlation re-weighting matches our decoding gain on this small
 code. What Syndromics adds is a physical model that names the component responsible, for placement,
-recalibration and (we expect) reuse across circuits. Scope: one run, one 9-qubit line, one day,
-bit-flip errors only.
+recalibration and (we expect) reuse across circuits. Scope: two runs on one 9-qubit line, bit-flip errors only.
 
 Reproduce it in seconds, with no IBM account, from the raw shots in the
 [demo kit](docs/IBM_DEMO.md) or the regression test:

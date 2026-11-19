@@ -33,6 +33,23 @@ is not yet optimised.
 Run: `pip install -e ".[ibm,dev]" torch`, then `python real_kingston.py` (all 6 splits) or
 `NOBURST=1 python real_kingston.py 1500000 5,0,2` (ablation).
 
+## Prospective test: a second day (job dbvc3lv82tmc73dupa7g, 19 November 2026)
+
+Everything learned on run 1 only (noise model, burst rate, network), then all 30,000 shots of run 2 decoded:
+same qubits, 27 hours later, after IBM recalibrated the chip. Nothing is tuned on run 2.
+
+| Decoder (run 2, 30,000 shots) | Logical errors | Rate |
+|---|---|---|
+| Matching with IBM calibration from the morning of run 2 | 123 | 0.41% |
+| Matching with the Syndromics model from run 1 | 55 | 0.18% |
+| Syndromics + adaptive, settings from run 1 | 17 | 0.057% |
+| **Neural hybrid trained from run 1** (3 seeds) | **9, 11, 11** | **0.034%** |
+| Neural hybrid without bursts (ablation, 3 seeds) | 55, 55, 54 | 0.18% |
+
+About 12x fewer logical errors than the fresh calibration. Counts are small (about 10 vs 17 against adaptive
+decoding), so read the neural-vs-adaptive gap as promising, not settled. Run: `python prospective_kingston.py`;
+results in `results_prospective_kingston.json` and `results_prospective_kingston_noburst.json`.
+
 ## Earlier simulation study (`chip.py`, `train.py`)
 
 Surface code with hidden faulty qubits, crosstalk and bad readout (Stim). At distance 5 the hybrid decoder reached

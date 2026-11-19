@@ -54,3 +54,27 @@ def test_bursts_far_above_pauli_model_on_real_kingston():
     D, _ = decodecheck._detectors(c, rep)
     bs = adaptive.burst_stats(c, D)
     assert bs["real"] > 20 * bs["model"]
+
+
+def load_run2():
+    z = np.load(os.path.join(HERE, "kingston_20261119_rep.npz"))
+    rep = np.unpackbits(z["rep"], axis=1)[:, : int(z["ncols"])]
+    cfg = json.load(open(os.path.join(HERE, "kingston_20261119_config.json")))
+    return rep, cfg
+
+
+def test_prospective_second_day_on_real_kingston():
+    """Run 2 (job dbvc3lv82tmc73dupa7g, 19 Nov 2026, same qubits, after IBM recalibrated): everything frozen from
+    run 1 must beat run 2's fresh calibration; the q128-q129 fault persists; no spurious q117-q105 'change'."""
+    from syndromics import adaptive
+    rep1, cfg1 = load(); rep2, cfg2 = load_run2()
+    r = adaptive.compare_runs(rep1, cfg1, rep2, cfg2, ibmdemo._models)
+    cal = r["run2_calibration"]["rate"]
+    assert r["frozen_syndromics"]["rate"] < 0.6 * cal
+    assert r["frozen_syndromics_la"]["rate"] < 0.25 * cal
+    names = [c["component"] for c in r["component_changes"]]
+    assert "q117-q105 two-qubit gate" not in names          # was an artefact of the unregularised fit (0.5.1)
+    assert "q129-q128 two-qubit gate" not in names          # the fault is stable across days
+    uni, cal2 = ibmdemo._models(cfg2)
+    ch = decodecheck.changed_components(rep2, cfg2["n_data"], cfg2["rounds"], uni, cal2, cfg2["line"])
+    assert ch[0]["component"] == "q129-q128 two-qubit gate" and ch[0]["ratio"] > 8
