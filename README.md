@@ -30,6 +30,7 @@ PyMatching decoder throughout.
 | **Syndromics** | **0.198%** (better than calibration in 6 of 6 splits) |
 | Re-weighting + leakage-aware (v0.5) | 0.103% |
 | **Syndromics + leakage-aware (v0.5)** | **0.103%** (better than Syndromics alone in 6 of 6 splits) |
+| Neural hybrid (research, below) | 0.064% (5 of 6 splits better than leakage-aware, 1 tie) |
 
 ![Logical error on held-out shots for each split](docs/k_decode5.svg)
 
@@ -47,6 +48,10 @@ that qubit's measurements for that shot, halving the logical error again. The tr
 any decoder model. Drift tracking over time windows (fresh fit per window, alerts confirmed in two
 windows) found the components stable during this job; on simulated drift it catches a gate x4 or
 measurement x3 change within one window with no false alarms.
+
+**Neural decoder (research).** A network trained only on simulated shots from the Syndromics model plus the
+erratic-qubit bursts reached **0.064%** on the same held-out real shots (58 errors in 90,000; better than adaptive
+decoding in 5 of 6 splits). Without the simulated bursts it gains nothing. See [research/neural_decoder](research/neural_decoder).
 
 **Stated plainly:** model-free correlation re-weighting matches our decoding gain on this small
 code. What Syndromics adds is a physical model that names the component responsible, for placement,

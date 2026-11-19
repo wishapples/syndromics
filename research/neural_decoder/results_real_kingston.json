@@ -1,0 +1,80 @@
+{
+ "job": "dbukcjvf8rhs73bmf9l0",
+ "test_shots_per_split": 15000,
+ "splits": [
+  {
+   "split": 0,
+   "f": 0.12,
+   "calibration": 59,
+   "syndromics": 34,
+   "adaptive": 21,
+   "neural_hybrid": 14
+  },
+  {
+   "split": 1,
+   "f": 0.12,
+   "calibration": 62,
+   "syndromics": 32,
+   "adaptive": 21,
+   "neural_hybrid": 15
+  },
+  {
+   "split": 2,
+   "f": 0.12,
+   "calibration": 63,
+   "syndromics": 27,
+   "adaptive": 15,
+   "neural_hybrid": 8
+  },
+  {
+   "split": 3,
+   "f": 0.12,
+   "calibration": 55,
+   "syndromics": 29,
+   "adaptive": 10,
+   "neural_hybrid": 7
+  },
+  {
+   "split": 4,
+   "f": 0.12,
+   "calibration": 53,
+   "syndromics": 25,
+   "adaptive": 9,
+   "neural_hybrid": 9
+  },
+  {
+   "split": 5,
+   "f": 0.12,
+   "calibration": 64,
+   "syndromics": 31,
+   "adaptive": 17,
+   "neural_hybrid": 5
+  }
+ ],
+ "ablation_no_bursts": [
+  {
+   "split": 5,
+   "f": 0.0,
+   "calibration": 64,
+   "syndromics": 31,
+   "adaptive": 17,
+   "neural_hybrid": 31
+  },
+  {
+   "split": 0,
+   "f": 0.0,
+   "calibration": 59,
+   "syndromics": 34,
+   "adaptive": 21,
+   "neural_hybrid": 34
+  },
+  {
+   "split": 2,
+   "f": 0.0,
+   "calibration": 63,
+   "syndromics": 27,
+   "adaptive": 15,
+   "neural_hybrid": 27
+  }
+ ]
+}

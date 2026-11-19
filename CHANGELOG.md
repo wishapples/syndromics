@@ -2,6 +2,12 @@
 
 Syndromics is updated continuously. Every hardware finding becomes a feature and an automated test.
 
+## Research: neural decoder on real data (19 November 2026)
+
+- `research/neural_decoder/real_kingston.py`: neural hybrid decoder trained on simulated shots from the Syndromics
+  model plus erratic-qubit bursts; 0.064% logical error on held-out real `ibm_kingston` shots (adaptive decoding:
+  0.10%). Ablation without bursts: no gain.
+
 ## 0.5.1 (18 November 2026)
 
 - `syndromics-ibm-demo validate --line ...` runs on chosen qubits, so a second run can reuse the first run's line.

@@ -1,0 +1,71 @@
+{
+  "chip": {
+    "bad_data_qubits": [
+      12,
+      17
+    ],
+    "crosstalk_pairs": [
+      [
+        8,
+        15
+      ],
+      [
+        10,
+        17
+      ],
+      [
+        12,
+        19
+      ]
+    ],
+    "bad_readout_qubits": [
+      2,
+      11
+    ],
+    "p": 0.004,
+    "d": 3,
+    "rounds": 3
+  },
+  "train_shots": 800000,
+  "test_shots": 500000,
+  "decoders": {
+    "MWPM-uniform": {
+      "LER": 0.102744,
+      "ci95": [
+        0.10190544645646452,
+        0.10358865789123295
+      ],
+      "vs_uniform": "+0.0% fewer errors"
+    },
+    "MWPM-oracle": {
+      "LER": 0.099114,
+      "ci95": [
+        0.09828880454642286,
+        0.09994535558087803
+      ],
+      "vs_uniform": "+3.5% fewer errors"
+    },
+    "NN": {
+      "LER": 0.059602,
+      "ci95": [
+        0.058949145543390966,
+        0.06026162173644187
+      ],
+      "vs_uniform": "+42.0% fewer errors"
+    },
+    "NN+MWPM": {
+      "LER": 0.059574,
+      "ci95": [
+        0.05892129014913924,
+        0.060233477560949496
+      ],
+      "vs_uniform": "+42.0% fewer errors"
+    }
+  },
+  "throughput_us_per_shot": {
+    "MWPM-uniform": 0.334475040435791,
+    "NN_batched": 14.661238193511963
+  },
+  "nn_single_shot_latency_us_cpu": 195.2037811279297,
+  "nn_params": 805377
+}
