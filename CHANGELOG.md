@@ -2,6 +2,15 @@
 
 Syndromics is updated continuously. Every hardware finding becomes a feature and an automated test.
 
+## 0.6.1 (19 November 2026): transfer test on hardware
+
+- Run 3 on ibm_kingston (job `dbvdl8ups3fc73bkad70`): distance 3, 20 rounds on q108-q128. The model frozen from run 2
+  (distance 5, 10 rounds) gave 320 logical errors over 5 held-out splits vs 769 for the calibration and 332 for
+  re-weighting trained on 15,000 run-3 shots (411 with 3,000; 511 with 1,000). Data in `tests/data/`, new regression test.
+- Adaptive settings transfer less well: boost 20 (chosen on run 2) gave 149 vs 94 for re-weighting + adaptive trained on
+  run 3; boost 40-80 gives about 85 (post hoc; to be confirmed on a new run). Scaling k with the number of rounds did
+  not help.
+
 ## 0.6.0 (19 November 2026): transfer test
 
 - `compare-runs` now also handles a **different circuit** in run 2 (more rounds, or a shorter code on part of run 1's

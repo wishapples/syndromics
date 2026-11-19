@@ -53,6 +53,29 @@ measure qubits). Run 2's own held-out test: calibration 0.404%, Syndromics 0.101
 Syndromics + leakage-aware 0.043%. The reverse direction (learn on run 2, test run 1) gives -64% and -79%.
 As on run 1, learned re-weighting matches the decoding gain; the physical attribution is what Syndromics adds.
 
+## Third run: the model carries over to a different circuit (19 November 2026)
+
+A distance-3, 20-round code on the q108-q128 end of the line (job `dbvdl8ups3fc73bkad70`), decoded with the model
+learned on run 2's distance-5, 10-round code. No run-3 data was used to build it. All rows are scored on the same
+held-out shots; totals over 5 random splits (75,000 test-shot decodes):
+
+| Decoder (run 3) | Run-3 shots used to learn | Logical errors |
+|---|---|---|
+| IBM calibration | 0 | 769 |
+| **Syndromics model transferred from run 2** | **0** | **320** |
+| Syndromics model transferred from run 1 (the day before) | 0 | 304 |
+| Correlation re-weighting | 1,000 | 511 |
+| Correlation re-weighting | 3,000 | 411 |
+| Correlation re-weighting | 15,000 | 332 |
+| Syndromics refitted on run 3 (reference) | 15,000 | 315 |
+
+With zero shots of the new circuit, the physical model matches re-weighting trained on 15,000 of them, and beats it at
+1,000 or 3,000. This is the first test where the physical model does better than the model-free method on decoding,
+not only on diagnosis. With adaptive decoding added, the transferred settings from run 2 (boost 20) did worse than
+re-weighting + adaptive trained on run 3 (149 vs 94 errors); from run 1 (boost 40) they tied (90 vs 94). A stronger
+boost (40-80) gives about 85 on run 3, but that was found after seeing this data and needs a new run to confirm.
+The q129-q128 gate was again about 15x calibration: three runs, two days, two circuits.
+
 **Works inside NVIDIA CUDA-Q QEC.** The Syndromics model is a Stim circuit, so its detector error model loads
 directly into CUDA-Q QEC decoders ([examples/cudaq_qec_export.py](examples/cudaq_qec_export.py)). On run 2 with CUDA-Q
 QEC's PyMatching decoder: IBM calibration 123 errors (0.410%), Syndromics model frozen from run 1 51 errors (0.170%).

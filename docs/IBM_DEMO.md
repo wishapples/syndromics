@@ -245,4 +245,8 @@ learned on 1,000, 3,000 and 15,000 shots of the new circuit. On data simulated f
 answer is known), the transferred model reached 0.29% logical error against 1.06% for the calibration and 0.50% for
 re-weighting trained on 15,000 new shots. Real hardware has noise the model does not contain, so expect a smaller gap.
 
+Our own hardware run (job `dbvdl8ups3fc73bkad70`, included as `example_ibm_kingston_2026-11-19_transfer/`):
+calibration 150 errors, transferred Syndromics model 69, re-weighting on 1,000 / 3,000 / 15,000 run-3 shots 105 / 102 / 77
+(15,000 held-out shots). From that folder: `syndromics-ibm-demo compare-runs --previous ../example_ibm_kingston_2026-11-19`.
+
 Questions or results: Vishal J Shah, CEO, Wish Apples Ventures Private Limited (Syndromics), ceo@wishapples.com.

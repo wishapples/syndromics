@@ -78,3 +78,19 @@ def test_prospective_second_day_on_real_kingston():
     uni, cal2 = ibmdemo._models(cfg2)
     ch = decodecheck.changed_components(rep2, cfg2["n_data"], cfg2["rounds"], uni, cal2, cfg2["line"])
     assert ch[0]["component"] == "q129-q128 two-qubit gate" and ch[0]["ratio"] > 8
+
+
+def test_transfer_to_a_different_circuit_on_real_kingston():
+    """Run 3 (job dbvdl8ups3fc73bkad70): distance-3, 20-round code on q108-q128, decoded with the model frozen from
+    run 2 (distance 5, 10 rounds). With no run-3 training data it must beat the calibration and match correlation
+    re-weighting trained on 15,000 run-3 shots."""
+    from syndromics import adaptive
+    rep2, cfg2 = load_run2()
+    z = np.load(os.path.join(HERE, "kingston_20261119b_rep.npz"))
+    rep3 = np.unpackbits(z["rep"], axis=1)[:, : int(z["ncols"])]
+    cfg3 = json.load(open(os.path.join(HERE, "kingston_20261119b_config.json")))
+    r = adaptive.transfer_runs(rep2, cfg2, rep3, cfg3, ibmdemo._models, train_sizes=(3000, None))
+    cal = r["run2_calibration"]["errors"]; syn = r["frozen_syndromics"]["errors"]
+    rw3k, rw15k = (x["errors"] for x in r["reweighting_on_run2"])
+    assert syn < 0.6 * cal
+    assert syn <= 1.1 * rw15k and syn < rw3k
