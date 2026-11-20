@@ -80,8 +80,10 @@ def _reweighting_builder(circ, det, sparsity):
 
 
 def fit_leakage_aware(circ, det_train, obs_train, *, method="syndromics", sparsity=0.5,
-                      boosts=(5, 10, 20, 40), ks=(4, 5, 6)):
-    """Fit on det_train and choose (boost, k) by 2-fold CV inside the training data only."""
+                      boosts=(40, 80), ks=(4, 5, 6)):
+    """Fit on det_train and choose (boost, k) by 2-fold CV inside the training data only.
+    Boost candidates start at 40 (v0.6.2): on ibm_kingston, CV inside one circuit sometimes picked a gentle boost (20)
+    that transferred badly to a different circuit (149 vs 87 errors). Decided before runs 4-6, which test it."""
     maker = _syndromics_builder if method == "syndromics" else _reweighting_builder
     n = len(det_train); h = n // 2
     halves = (np.arange(h), np.arange(h, n))

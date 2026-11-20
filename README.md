@@ -14,6 +14,14 @@ Website: [syndromics.wishapples.com](https://syndromics.wishapples.com) ·
 Technical note: [docs/notes/Syndromics_Kingston_Technical_Note.pdf](docs/notes/Syndromics_Kingston_Technical_Note.pdf) ·
 What's new: [CHANGELOG.md](CHANGELOG.md)
 
+## Why Syndromics
+
+| What it does | For whom | Evidence so far |
+|---|---|---|
+| **Finds faulty parts** | Chip engineers | On `ibm_kingston` the q129-q128 gate was about 15x worse than IBM's published value in three runs, and still there after IBM recalibrated |
+| **Better error correction** | Decoders | 2-7x fewer logical errors than with the published calibration (0.41% -> 0.18%; 0.057% with adaptive decoding), on the next day and on a new circuit with no new data |
+| **Better results for users** | Anyone running programs | Corrected rates go into the Qiskit Target, so qubit selection avoids today's bad qubits. Simulated with planted drift: GHZ-12 fidelity 0.65 -> 0.88. Not yet tested on hardware |
+
 ## First result on real IBM hardware (18 November 2026)
 
 A distance-5 repetition code (9 qubits, 10 rounds, 30,000 shots) on IBM's `ibm_kingston`

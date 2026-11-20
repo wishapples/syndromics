@@ -2,6 +2,12 @@
 
 Syndromics is updated continuously. Every hardware finding becomes a feature and an automated test.
 
+## 0.6.2 (19 November 2026): adaptive boost fixed before the next runs
+
+- Adaptive decoding now chooses its boost from 40 or 80 (was 5-40). Decided after run 3 and before runs 4-6, which test it.
+  Effect on existing data: run 2 -> run 3 transfer 149 -> 87 errors; run 1 held-out adaptive 0.103% -> 0.097%
+  (re-weighting + adaptive 0.093%); run 2 -> run 1 26 -> 25; run 1 -> run 2 unchanged (17).
+
 ## 0.6.1 (19 November 2026): transfer test on hardware
 
 - Run 3 on ibm_kingston (job `dbvdl8ups3fc73bkad70`): distance 3, 20 rounds on q108-q128. The model frozen from run 2

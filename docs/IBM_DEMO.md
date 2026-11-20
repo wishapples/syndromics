@@ -85,8 +85,8 @@ Expected output (about 20 seconds), abridged:
   Device calibration                            0.396%        baseline
   Standard correlation re-weighting             0.199%            -50%
   Syndromics noise model                        0.198%            -50%
-  Re-weighting + leakage-aware                  0.103%            -74%
-  Syndromics + leakage-aware                    0.103%            -74%
+  Re-weighting + leakage-aware                  0.093%            -76%
+  Syndromics + leakage-aware                    0.097%            -76%
   Syndromics beat the calibration in 6 of 6 tests.
   Leakage-aware decoding improved on Syndromics in 6 of 6 tests ...
 
@@ -225,6 +225,14 @@ Our own second run (job `dbvc3lv82tmc73dupa7g`, 19 November 2026, 27 hours later
 The kit includes it as `example_ibm_kingston_2026-11-19/`: from that folder,
 `syndromics-ibm-demo compare-runs --previous ../example_ibm_kingston_2026-11-18` reproduces it with no account.
 
+
+
+### Next runs (planned before they are run)
+
+Kit 0.6.2 fixes one setting in advance: the adaptive boost is chosen from 40 or 80 (it was 5-40). The next runs test this
+and the transfer on new hardware: run 4 on ibm_fez (distance 5, 10 rounds, the line it chooses), run 5 a distance-3,
+20-round code on five qubits of run 4's line, and run 6 a 30-round code on the same nine Kingston qubits. Each is decoded with
+`compare-runs --previous` the earlier run, with nothing tuned on the new data.
 
 ## 6. Transfer test: does the model carry over to a different circuit?
 
